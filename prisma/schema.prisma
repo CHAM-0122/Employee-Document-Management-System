@@ -1,0 +1,418 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  hq_admin
+  store_admin
+  viewer
+}
+
+enum IntakeStatus {
+  sent
+  in_progress
+  submitted
+  reviewed
+  returned
+  expired
+}
+
+enum Gender {
+  male
+  female
+  no_answer
+}
+
+enum CommuteMethod {
+  walk
+  bicycle
+  train
+  bus
+  bike
+  car
+}
+
+enum ReferralSource {
+  job_posting
+  referral
+  other
+}
+
+enum YesNo {
+  yes
+  no
+}
+
+enum SchoolType {
+  university
+  junior_college
+  vocational
+  high_school
+}
+
+enum SchoolSchedule {
+  daytime
+  nighttime
+}
+
+enum DocumentType {
+  employment_contract
+  employee_pledge
+  sns_pledge
+  retirement_pledge
+}
+
+enum GeneratedDocumentKind {
+  submission_bundle
+  employment_contract_pdf
+  employee_pledge_pdf
+  sns_pledge_pdf
+  retirement_pledge_pdf
+}
+
+enum AuditActorType {
+  employee
+  admin
+  system
+}
+
+enum AuditAction {
+  invite_sent
+  started
+  saved
+  consented
+  signed
+  submitted
+  reviewed
+  returned
+  pdf_generated
+  bank_account_saved
+  my_number_saved
+  bank_account_viewed
+  my_number_viewed
+}
+
+model Store {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique @db.VarChar(50)
+  name      String   @db.VarChar(100)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  adminUsers      AdminUser[]
+  employeeIntakes EmployeeIntake[]
+
+  @@map("stores")
+}
+
+model AdminUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  storeId      String?   @map("store_id") @db.Uuid
+  name         String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  role         AdminRole
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store           Store?           @relation(fields: [storeId], references: [id])
+  reviewedIntakes EmployeeIntake[]
+  auditLogs       AuditLog[]
+
+  @@index([storeId], map: "idx_admin_users_store_id")
+  @@index([role], map: "idx_admin_users_role")
+  @@map("admin_users")
+}
+
+model EmployeeIntake {
+  id                       String          @id @default(uuid()) @db.Uuid
+  intakeToken              String          @unique @map("intake_token") @db.VarChar(120)
+  storeId                  String          @map("store_id") @db.Uuid
+  status                   IntakeStatus    @default(sent)
+  invitedName              String?         @map("invited_name") @db.VarChar(100)
+  inviteEmail              String          @map("invite_email") @db.VarChar(255)
+  inviteExpiresAt          DateTime        @map("invite_expires_at") @db.Timestamptz(6)
+  pledgeDate               DateTime?       @map("pledge_date") @db.Date
+  startedAt                DateTime?       @map("started_at") @db.Timestamptz(6)
+  lastSavedAt              DateTime?       @map("last_saved_at") @db.Timestamptz(6)
+  submittedAt              DateTime?       @map("submitted_at") @db.Timestamptz(6)
+  reviewedAt               DateTime?       @map("reviewed_at") @db.Timestamptz(6)
+  reviewedByAdminId        String?         @map("reviewed_by_admin_id") @db.Uuid
+  fullName                 String?         @map("full_name") @db.VarChar(60)
+  fullNameKana             String?         @map("full_name_kana") @db.VarChar(120)
+  gender                   Gender?
+  birthDate                DateTime?       @map("birth_date") @db.Date
+  ageAtSubmission          Int?            @map("age_at_submission")
+  email                    String?         @db.VarChar(255)
+  phone                    String?         @db.VarChar(20)
+  postalCode               String?         @map("postal_code") @db.VarChar(8)
+  currentAddress           String?         @map("current_address") @db.VarChar(255)
+  residentSameAsCurrent    Boolean         @default(true) @map("resident_same_as_current")
+  residentAddress          String?         @map("resident_address") @db.VarChar(255)
+  profilePhotoFilePath     String?         @map("profile_photo_file_path") @db.VarChar(500)
+  profilePhotoDataUrl      String?         @map("profile_photo_data_url") @db.Text
+  emergencyContactName     String?         @map("emergency_contact_name") @db.VarChar(60)
+  emergencyContactKana     String?         @map("emergency_contact_kana") @db.VarChar(120)
+  emergencyContactRelation String?         @map("emergency_contact_relation") @db.VarChar(40)
+  emergencyContactPhone    String?         @map("emergency_contact_phone") @db.VarChar(20)
+  commuteMethod            CommuteMethod?  @map("commute_method")
+  commuteDistanceKm        Decimal?        @map("commute_distance_km") @db.Decimal(4, 1)
+  referralSource           ReferralSource? @map("referral_source")
+  referralPerson           String?         @map("referral_person") @db.VarChar(60)
+  referralStoreName        String?         @map("referral_store_name") @db.VarChar(80)
+  workDaysPerWeek          Decimal?        @map("work_days_per_week") @db.Decimal(3, 1)
+  workHoursPerWeek         Decimal?        @map("work_hours_per_week") @db.Decimal(4, 1)
+  shiftStartTime           DateTime?       @map("shift_start_time") @db.Time(6)
+  shiftEndTime             DateTime?       @map("shift_end_time") @db.Time(6)
+  hasSecondJob             YesNo?          @map("has_second_job")
+  secondJobType            String?         @map("second_job_type") @db.VarChar(30)
+  secondJobNote            String?         @map("second_job_note") @db.VarChar(120)
+  isStudent                Boolean         @default(false) @map("is_student")
+  schoolType               SchoolType?     @map("school_type")
+  schoolGrade              String?         @map("school_grade") @db.VarChar(20)
+  schoolSchedule           SchoolSchedule? @map("school_schedule")
+  schoolName               String?         @map("school_name") @db.VarChar(120)
+  isMinor                  Boolean         @default(false) @map("is_minor")
+  guardianName             String?         @map("guardian_name") @db.VarChar(60)
+  guardianRelation         String?         @map("guardian_relation") @db.VarChar(40)
+  guardianPhone            String?         @map("guardian_phone") @db.VarChar(20)
+  isForeignNational        Boolean         @default(false) @map("is_foreign_national")
+  residenceCardFrontDataUrl String?        @map("residence_card_front_data_url") @db.Text
+  residenceCardBackDataUrl  String?        @map("residence_card_back_data_url") @db.Text
+  confirmInputAccuracy     Boolean         @default(false) @map("confirm_input_accuracy")
+  confirmElectronicConsent Boolean         @default(false) @map("confirm_electronic_consent")
+  createdAt                DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  store              Store               @relation(fields: [storeId], references: [id])
+  reviewedByAdmin    AdminUser?          @relation(fields: [reviewedByAdminId], references: [id])
+  documentConsents   DocumentConsent[]
+  documentSignature  DocumentSignature?
+  bankAccount        BankAccount?
+  myNumberRecord     MyNumberRecord?
+  employmentContract EmploymentContract?
+  generatedDocuments GeneratedDocument[]
+  auditLogs          AuditLog[]
+
+  @@index([storeId], map: "idx_employee_intakes_store_id")
+  @@index([status], map: "idx_employee_intakes_status")
+  @@index([submittedAt], map: "idx_employee_intakes_submitted_at")
+  @@index([fullName], map: "idx_employee_intakes_full_name")
+  @@index([inviteEmail], map: "idx_employee_intakes_invite_email")
+  @@map("employee_intakes")
+}
+
+model JobPositionMaster {
+  id                  String   @id @default(uuid()) @db.Uuid
+  code                String   @unique @db.VarChar(20)
+  sortOrder           Int      @map("sort_order")
+  name                String   @db.VarChar(100)
+  basicSalaryMonthly  Int      @map("basic_salary_monthly")
+  dutyAllowanceMonthly Int     @map("duty_allowance_monthly")
+  fixedOvertimeNote   String?  @map("fixed_overtime_note") @db.VarChar(120)
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  employmentContracts EmploymentContract[]
+
+  @@index([sortOrder], map: "idx_job_position_masters_sort_order")
+  @@map("job_position_masters")
+}
+
+model EmploymentContract {
+  id                    String   @id @default(uuid()) @db.Uuid
+  employeeIntakeId      String   @unique @map("employee_intake_id") @db.Uuid
+  jobPositionMasterId   String   @map("job_position_master_id") @db.Uuid
+  employmentCategory    String   @map("employment_category") @db.VarChar(30)
+  contractStartDate     DateTime @map("contract_start_date") @db.Date
+  contractEndDate       DateTime @map("contract_end_date") @db.Date
+  renewalPatternText    String   @map("renewal_pattern_text") @db.VarChar(255)
+  workLocationName      String   @map("work_location_name") @db.VarChar(120)
+  workLocationAddress   String   @map("work_location_address") @db.VarChar(255)
+  dutyDescription       String   @map("duty_description") @db.VarChar(255)
+  currentRoleLabel      String   @map("current_role_label") @db.VarChar(100)
+  shiftStartTime        DateTime @map("shift_start_time") @db.Time(6)
+  shiftEndTime          DateTime @map("shift_end_time") @db.Time(6)
+  breakMinutes          Int      @map("break_minutes")
+  overtimeAllowed       Boolean  @default(true) @map("overtime_allowed")
+  holidayWorkAllowed    Boolean  @default(true) @map("holiday_work_allowed")
+  holidayRuleText       String   @map("holiday_rule_text") @db.VarChar(255)
+  basicSalaryMonthly    Int      @map("basic_salary_monthly")
+  dutyAllowanceMonthly  Int      @map("duty_allowance_monthly")
+  hourlyWage            Int?     @map("hourly_wage")
+  fixedOvertimeHoursNote String? @map("fixed_overtime_hours_note") @db.VarChar(120)
+  commutingAllowanceMonthly Int? @map("commuting_allowance_monthly")
+  commutingAllowanceNote String? @map("commuting_allowance_note") @db.VarChar(120)
+  payClosingDay         String   @map("pay_closing_day") @db.VarChar(40)
+  payDate               String   @map("pay_date") @db.VarChar(40)
+  wagePaymentMethod     String   @map("wage_payment_method") @db.VarChar(120)
+  hasRaise              Boolean  @default(true) @map("has_raise")
+  hasBonus              Boolean  @default(true) @map("has_bonus")
+  hasRetirementPay      Boolean  @default(false) @map("has_retirement_pay")
+  retirementRuleText    String   @map("retirement_rule_text") @db.VarChar(255)
+  socialInsuranceNote   String?  @map("social_insurance_note") @db.VarChar(120)
+  employmentInsuranceNote String? @map("employment_insurance_note") @db.VarChar(120)
+  transferPossibilityNote String? @map("transfer_possibility_note") @db.VarChar(255)
+  submittedAt           DateTime @map("submitted_at") @db.Timestamptz(6)
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  employeeIntake    EmployeeIntake    @relation(fields: [employeeIntakeId], references: [id])
+  jobPositionMaster JobPositionMaster @relation(fields: [jobPositionMasterId], references: [id])
+
+  @@index([jobPositionMasterId], map: "idx_employment_contracts_job_position_master_id")
+  @@index([submittedAt], map: "idx_employment_contracts_submitted_at")
+  @@map("employment_contracts")
+}
+
+model BankAccount {
+  id                     String   @id @default(uuid()) @db.Uuid
+  employeeIntakeId       String   @unique @map("employee_intake_id") @db.Uuid
+  bankName               String   @map("bank_name") @db.VarChar(100)
+  branchName             String   @map("branch_name") @db.VarChar(100)
+  branchCode             String   @map("branch_code") @db.VarChar(3)
+  accountType            String   @map("account_type") @db.VarChar(20)
+  encryptedAccountNumber String   @map("encrypted_account_number") @db.Text
+  accountNumberLast4     String   @map("account_number_last4") @db.VarChar(4)
+  accountHolderKana      String   @map("account_holder_kana") @db.VarChar(120)
+  bankBookImageDataUrl    String?  @map("bank_book_image_data_url") @db.Text
+  agreedUsage            Boolean  @default(false) @map("agreed_usage")
+  confirmedOwnAccount    Boolean  @default(false) @map("confirmed_own_account")
+  submittedAt            DateTime @map("submitted_at") @db.Timestamptz(6)
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  employeeIntake EmployeeIntake @relation(fields: [employeeIntakeId], references: [id])
+
+  @@index([submittedAt], map: "idx_bank_accounts_submitted_at")
+  @@map("bank_accounts")
+}
+
+model MyNumberRecord {
+  id                  String   @id @default(uuid()) @db.Uuid
+  employeeIntakeId    String   @unique @map("employee_intake_id") @db.Uuid
+  encryptedMyNumber   String   @map("encrypted_my_number") @db.Text
+  myNumberLast4       String   @map("my_number_last4") @db.VarChar(4)
+  purposeOfUseVersion String   @map("purpose_of_use_version") @db.VarChar(40)
+  agreedPurpose       Boolean  @default(false) @map("agreed_purpose")
+  confirmedAccuracy   Boolean  @default(false) @map("confirmed_accuracy")
+  submittedAt         DateTime @map("submitted_at") @db.Timestamptz(6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  employeeIntake EmployeeIntake @relation(fields: [employeeIntakeId], references: [id])
+
+  @@index([submittedAt], map: "idx_my_number_records_submitted_at")
+  @@map("my_number_records")
+}
+
+model DocumentTemplate {
+  id           String       @id @default(uuid()) @db.Uuid
+  documentType DocumentType @map("document_type")
+  version      String       @db.VarChar(40)
+  title        String       @db.VarChar(100)
+  bodyHtml     String       @map("body_html") @db.Text
+  bodyText     String?      @map("body_text") @db.Text
+  isActive     Boolean      @default(true) @map("is_active")
+  publishedAt  DateTime?    @map("published_at") @db.Timestamptz(6)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  documentConsents DocumentConsent[]
+
+  @@unique([documentType, version], map: "uq_document_templates_type_version")
+  @@index([documentType], map: "idx_document_templates_document_type")
+  @@map("document_templates")
+}
+
+model DocumentConsent {
+  id                   String       @id @default(uuid()) @db.Uuid
+  employeeIntakeId     String       @map("employee_intake_id") @db.Uuid
+  documentTemplateId   String       @map("document_template_id") @db.Uuid
+  documentType         DocumentType @map("document_type")
+  version              String       @db.VarChar(40)
+  bodySnapshotHtml     String       @map("body_snapshot_html") @db.Text
+  scrolledToEnd        Boolean      @default(false) @map("scrolled_to_end")
+  agreeRead            Boolean      @map("agree_read")
+  agreeConfidentiality Boolean?     @map("agree_confidentiality")
+  agreeDiscipline      Boolean?     @map("agree_discipline")
+  agreeRules           Boolean?     @map("agree_rules")
+  agreeMedia           Boolean?     @map("agree_media")
+  agreeLiability       Boolean?     @map("agree_liability")
+  consentedAt          DateTime     @map("consented_at") @db.Timestamptz(6)
+  ipAddress            String       @map("ip_address") @db.Inet
+  userAgent            String       @map("user_agent") @db.VarChar(1000)
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  employeeIntake   EmployeeIntake   @relation(fields: [employeeIntakeId], references: [id])
+  documentTemplate DocumentTemplate @relation(fields: [documentTemplateId], references: [id])
+
+  @@unique([employeeIntakeId, documentType], map: "uq_document_consents_intake_type")
+  @@index([documentTemplateId], map: "idx_document_consents_template_id")
+  @@map("document_consents")
+}
+
+model DocumentSignature {
+  id                String   @id @default(uuid()) @db.Uuid
+  employeeIntakeId  String   @unique @map("employee_intake_id") @db.Uuid
+  signerName        String   @map("signer_name") @db.VarChar(60)
+  signatureFilePath String   @map("signature_file_path") @db.VarChar(500)
+  signatureDataUrl  String?  @map("signature_data_url") @db.Text
+  signatureFileType String   @map("signature_file_type") @db.VarChar(20)
+  signedDate        DateTime @map("signed_date") @db.Date
+  signedAt          DateTime @map("signed_at") @db.Timestamptz(6)
+  ipAddress         String   @map("ip_address") @db.Inet
+  userAgent         String   @map("user_agent") @db.VarChar(1000)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  employeeIntake EmployeeIntake @relation(fields: [employeeIntakeId], references: [id])
+
+  @@map("document_signatures")
+}
+
+model GeneratedDocument {
+  id               String                @id @default(uuid()) @db.Uuid
+  employeeIntakeId String                @map("employee_intake_id") @db.Uuid
+  documentKind     GeneratedDocumentKind @map("document_kind")
+  filePath         String                @map("file_path") @db.VarChar(500)
+  fileName         String                @map("file_name") @db.VarChar(255)
+  fileSizeBytes    BigInt?               @map("file_size_bytes")
+  sha256Hash       String?               @map("sha256_hash") @db.VarChar(64)
+  generatedAt      DateTime              @map("generated_at") @db.Timestamptz(6)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  employeeIntake EmployeeIntake @relation(fields: [employeeIntakeId], references: [id])
+
+  @@index([employeeIntakeId], map: "idx_generated_documents_employee_intake_id")
+  @@map("generated_documents")
+}
+
+model AuditLog {
+  id               String         @id @default(uuid()) @db.Uuid
+  actorType        AuditActorType @map("actor_type")
+  actorAdminUserId String?        @map("actor_admin_user_id") @db.Uuid
+  employeeIntakeId String?        @map("employee_intake_id") @db.Uuid
+  action           AuditAction
+  actionTarget     String?        @map("action_target") @db.VarChar(50)
+  ipAddress        String?        @map("ip_address") @db.Inet
+  userAgent        String?        @map("user_agent") @db.VarChar(1000)
+  metadataJson     Json?          @map("metadata_json")
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actorAdminUser AdminUser?      @relation(fields: [actorAdminUserId], references: [id])
+  employeeIntake EmployeeIntake? @relation(fields: [employeeIntakeId], references: [id])
+
+  @@index([employeeIntakeId], map: "idx_audit_logs_employee_intake_id")
+  @@index([action], map: "idx_audit_logs_action")
+  @@index([createdAt], map: "idx_audit_logs_created_at")
+  @@map("audit_logs")
+}

@@ -1,0 +1,20 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: employee-intake-contracts-web
+    command: sh -c "npm run prisma:generate && npx next dev -H 0.0.0.0 -p ${PORT:-3048}"
+    environment:
+      NODE_ENV: development
+      NEXT_TELEMETRY_DISABLED: "1"
+      USE_MOCK_DATA: "1"
+      PORT: "3048"
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@localhost:5432/employee_intake}
+    ports:
+      - "3048:3048"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    restart: unless-stopped

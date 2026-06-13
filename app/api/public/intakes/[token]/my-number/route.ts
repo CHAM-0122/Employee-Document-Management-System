@@ -1,0 +1,66 @@
+import { requirePublicIntakeToken } from "@/src/lib/api/auth";
+import { parseJson } from "@/src/lib/api/parse";
+import { apiError, ok } from "@/src/lib/api/responses";
+import { getRequestMeta } from "@/src/lib/api/request-meta";
+import { createEmployeeAuditLog } from "@/src/lib/db/audit-logs";
+import {
+  findPublicIntakeByToken,
+  savePublicIntakeMyNumber,
+} from "@/src/lib/db/public-intakes";
+import { myNumberSchema } from "@/src/lib/intake-contracts/schemas";
+import {
+  saveMockMyNumber,
+  shouldUseMockData,
+} from "@/src/lib/mock/mock-repositories";
+
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ token: string }> },
+) {
+  const { token } = await params;
+  const auth = await requirePublicIntakeToken(token);
+
+  if (!auth.ok) {
+    return auth.response;
+  }
+
+  const parsed = await parseJson(request, myNumberSchema);
+  if (!parsed.success) {
+    return parsed.response;
+  }
+
+  if (shouldUseMockData()) {
+    const updated = saveMockMyNumber(token, parsed.data);
+    if (!updated) {
+      return apiError("NOT_FOUND", "対象の手続きが見つかりません", 404);
+    }
+
+    return ok({
+      ok: true,
+      status: updated.status,
+      savedAt: updated.savedAt,
+    });
+  }
+
+  const intake = await findPublicIntakeByToken(token);
+  if (!intake) {
+    return apiError("NOT_FOUND", "対象の手続きが見つかりません", 404);
+  }
+
+  await savePublicIntakeMyNumber(intake.id, parsed.data);
+
+  const meta = getRequestMeta(request);
+  await createEmployeeAuditLog({
+    employeeIntakeId: intake.id,
+    action: "my_number_saved",
+    actionTarget: "my_number",
+    ipAddress: meta.ipAddress,
+    userAgent: meta.userAgent,
+  });
+
+  return ok({
+    ok: true,
+    status: "in_progress",
+    savedAt: new Date().toISOString(),
+  });
+}
