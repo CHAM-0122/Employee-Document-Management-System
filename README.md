@@ -1,13 +1,67 @@
 # Employee Intake Contracts MVP
 
-入社時の `従業員誓約書` と `SNS誓約書` を電子化するための Next.js / Prisma ベースのMVPです。
+入社時に提出する **従業員誓約書**・**SNS誓約書** を電子化する社内向けシステムです。
 
-## セットアップ
+紙で運用している契約書をスマートフォンから入力・署名でき、
+管理者は提出状況を一覧で確認できます。
 
-1. `.env.example` をもとに `.env.local` を作成
-2. 依存関係をインストール
-3. Prisma Client を生成
-4. 開発サーバを起動
+---
+
+## ✨ Features
+
+- QRコードから契約書へアクセス
+- スマホで電子署名
+- 従業員情報の入力
+- 誓約書・SNS誓約書の提出
+- 管理画面で提出状況を一覧表示
+- Prismaによるデータ管理
+
+---
+
+## 🏗️ Architecture
+
+（ここにシステム構成図）
+
+例
+
+Employee
+    │
+    ▼
+Next.js
+    │
+Prisma ORM
+    │
+PostgreSQL
+
+---
+
+## 🛠 Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Frontend | Next.js 15 / React |
+| Backend | Next.js Route Handlers |
+| ORM | Prisma |
+| Database | PostgreSQL |
+| Styling | Tailwind CSS |
+| Container | Docker |
+| Language | TypeScript |
+
+---
+
+## 📂 Directory
+
+```text
+app/
+components/
+lib/
+prisma/
+public/
+```
+
+---
+
+## 🚀 Setup
 
 ```bash
 npm install
@@ -15,42 +69,73 @@ npm run prisma:generate
 npm run dev
 ```
 
-## DockerでQR読み取りテスト
+---
 
-実機スマホでQRコードを読み込むテストをする場合は、Dockerでも起動できます。
+## 🐳 Docker
 
 ```bash
 docker compose up --build
 ```
 
-Macから確認する場合:
+Mac
 
-```text
+```
 http://localhost:3048/admin/intakes?role=hq_admin
 ```
 
-スマホから確認する場合は、Macと同じWi-Fiに接続し、MacのローカルIPを使います。
+スマホ
 
-```bash
-ipconfig getifaddr en0
+```
+http://<MacのIP>:3048
 ```
 
-例:
+---
 
-```text
-http://192.168.1.20:3048
-```
+## 📱 Main Pages
 
-詳しくは `DOCKER_TESTING.md` を参照してください。
+| URL | Description |
+|------|-------------|
+| / | トップ |
+| /intakes/:token | 契約入力 |
+| /admin/intakes | 管理画面 |
 
-## 主要ルート
+---
 
-- `/`
-- `/intakes/sample-token`
-- `/admin/intakes`
+## 📸 Screenshots
 
-## 注意
+- 契約入力画面
+- 電子署名画面
+- 管理画面
 
-- 管理者認証は仮実装です
-- PDF生成、メール送信、S3保存は未接続です
-- 署名画像は現時点では保存パスのみ仮実装です
+---
+
+## 🔮 Future Improvements
+
+- AWS S3へPDF保存
+- メール通知
+- Amazon SES連携
+- Cognito認証
+- CloudFront配信
+- 電子署名タイムスタンプ
+- 監査ログ
+
+---
+
+## ⚠️ Current Status
+
+- 管理者認証は仮実装
+- PDF生成は未実装
+- メール送信未実装
+- S3保存未実装
+
+紙で運用されている入社時契約書の管理を効率化することを目的として開発しました。
+
+## 💡 Learning Points
+
+このシステムを通して以下を学びました。
+
+- Next.js App Router
+- PrismaによるORM
+- Docker Composeを利用した開発環境構築
+- スマートフォンを利用したQRコード検証
+- 将来的なAWS（S3・SES・Cognito）への拡張を考慮した設計
