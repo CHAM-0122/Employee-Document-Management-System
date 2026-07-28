@@ -20,18 +20,8 @@
 
 ## 🏗️ Architecture
 
-（ここにシステム構成図）
+![システム構成図](./images/employee.jpg)
 
-例
-
-Employee
-    │
-    ▼
-Next.js
-    │
-Prisma ORM
-    │
-PostgreSQL
 
 ---
 
