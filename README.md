@@ -20,8 +20,6 @@
 
 ## 🏗️ Architecture
 
-## 🏗️ Architecture
-
 <p align="center">
   <img src="./images/Employee.jpg" alt="システム構成図" width="900">
 </p>
@@ -102,6 +100,12 @@ http://<MacのIP>:3048
 - 管理画面
 
 ---
+
+## 📄 Documents
+
+システムの企画背景や導入効果、AWS本番構成をまとめた企画提案書です。
+
+- 📑 [企画提案書](./documents/Proposal.pdf)
 
 ## 🔮 Future Improvements
 
