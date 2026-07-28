@@ -20,7 +20,11 @@
 
 ## 🏗️ Architecture
 
-![システム構成図](./images/employee.jpg)
+## 🏗️ Architecture
+
+<p align="center">
+  <img src="./images/Employee.jpg" alt="システム構成図" width="900">
+</p>
 
 
 ---
