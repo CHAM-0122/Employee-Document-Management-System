@@ -6,7 +6,7 @@
 管理者は提出状況を一覧で確認できます。
 
 <p align="center">
-  <img src="./images/admin1.png" alt="管理画面" width="100%">
+  <img src="./images/admin2.png" alt="管理画面" width="100%">
 </p>
 ---
 
@@ -98,19 +98,17 @@ http://<MacのIP>:3048
 
 ## 📸 Screenshots
 
-## 📸 Screenshots
-
 ### 管理画面
 
 <p align="center">
-  <img src="./images/admin2.png" alt="管理画面一覧" width="100%">
+  <img src="./images/admin.png" alt="管理画面一覧" width="100%">
 </p>
 
 ### 契約入力・電子署名
 
 <p align="center">
-  <img src="./images/intake.jpg" alt="契約入力画面" width="45%">
-  <img src="./images/sign.jpg" alt="電子署名画面" width="45%">
+  <img src="./images/intake.jpeg" alt="契約入力画面" width="45%">
+  <img src="./images/sign.jpeg" alt="電子署名画面" width="45%">
 </p>
 
 ---
